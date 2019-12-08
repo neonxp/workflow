@@ -1,5 +1,7 @@
 # Workflow for Go
 
+[![GoDoc](https://godoc.org/github.com/neonxp/workflow?status.svg)](https://godoc.org/github.com/neonxp/workflow)
+
 Simple state machine. Inspired by [Symfony Workflow](https://github.com/symfony/workflow).
 
 ## Example usage

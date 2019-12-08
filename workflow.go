@@ -7,7 +7,9 @@ import (
 )
 
 var (
-	ErrCantApply          = errors.New("cant apply transition")
+	// ErrCantApply error if transition is not applicable to object
+	ErrCantApply = errors.New("cant apply transition")
+	// ErrTransitionNotFound error if no transition with this name
 	ErrTransitionNotFound = errors.New("transition not found")
 )
 
@@ -46,7 +48,7 @@ func (w *Workflow) GetEnabledTransitions(obj Placeer) []string {
 	if currentPlace == "" {
 		currentPlace = w.initialPlace
 	}
-	result := make([]string, 0)
+	var result = make([]string, 0)
 	for name, t := range w.transitions {
 		for _, f := range t.From {
 			if f == currentPlace {
