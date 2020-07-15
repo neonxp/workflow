@@ -90,5 +90,14 @@ func (w *Workflow) DumpToDot() []byte {
 	return buf.Bytes()
 }
 
+// Merge another workflow to current
+func (w *Workflow) Merge(workflow *Workflow) {
+	for from, tos := range workflow.transitions {
+		for _, to := range tos {
+			w.AddTransition(from, to)
+		}
+	}
+}
+
 // Place is one of state
 type Place string
