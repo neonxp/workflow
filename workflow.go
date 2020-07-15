@@ -7,91 +7,83 @@ import (
 )
 
 var (
-	// ErrCantApply error if transition is not applicable to object
-	ErrCantApply = errors.New("cant apply transition")
 	// ErrTransitionNotFound error if no transition with this name
 	ErrTransitionNotFound = errors.New("transition not found")
 )
 
 // Workflow state machine
 type Workflow struct {
-	transitions  map[string]transition
+	transitions  map[Place][]Place
 	initialPlace Place
 }
 
 // NewWorkflow returns new Workflow instance
 func NewWorkflow(initialPlace Place) *Workflow {
-	return &Workflow{initialPlace: initialPlace, transitions: map[string]transition{}}
+	return &Workflow{initialPlace: initialPlace, transitions: map[Place][]Place{}}
 }
 
 // Can returns nil if transition applicable to object and error if not
-func (w *Workflow) Can(obj Placeer, transition string) error {
+func (w *Workflow) Can(obj Placeer, to Place) error {
 	currentPlace := obj.GetPlace()
 	if currentPlace == "" {
 		currentPlace = w.initialPlace
 	}
-	tr, ok := w.transitions[transition]
+	tr, ok := w.transitions[currentPlace]
 	if !ok {
 		return ErrTransitionNotFound
 	}
-	for _, f := range tr.From {
-		if f == currentPlace {
+	for _, f := range tr {
+		if f == to {
 			return nil
 		}
 	}
-	return ErrCantApply
+	return ErrTransitionNotFound
 }
 
 // GetEnabledTransitions return all applicable transitions for object
-func (w *Workflow) GetEnabledTransitions(obj Placeer) []string {
+func (w *Workflow) GetEnabledTransitions(obj Placeer) []Place {
 	currentPlace := obj.GetPlace()
 	if currentPlace == "" {
 		currentPlace = w.initialPlace
 	}
-	var result = make([]string, 0)
-	for name, t := range w.transitions {
-		for _, f := range t.From {
-			if f == currentPlace {
-				result = append(result, name)
-				break
-			}
-		}
+	if _, ok := w.transitions[currentPlace]; !ok {
+		return nil
 	}
-	return result
+	return w.transitions[currentPlace]
 }
 
 // Apply next state from transition to object
-func (w *Workflow) Apply(obj Placeer, transition string) error {
+func (w *Workflow) Apply(obj Placeer, to Place) error {
 	currentPlace := obj.GetPlace()
 	if currentPlace == "" {
 		currentPlace = w.initialPlace
 	}
-	tr, ok := w.transitions[transition]
+	tr, ok := w.transitions[currentPlace]
 	if !ok {
 		return ErrTransitionNotFound
 	}
-	for _, f := range tr.From {
-		if f == currentPlace {
-			return obj.SetPlace(tr.To)
+	for _, f := range tr {
+		if f == to {
+			return obj.SetPlace(to)
 		}
 	}
-	return ErrCantApply
+	return ErrTransitionNotFound
 }
 
 // AddTransition to workflow
-func (w *Workflow) AddTransition(name string, from []Place, to Place) {
-	w.transitions[name] = transition{
-		From: from,
-		To:   to,
+func (w *Workflow) AddTransition(from Place, to Place) {
+	if _, ok := w.transitions[from]; !ok {
+		w.transitions[from] = []Place{}
 	}
+	w.transitions[from] = append(w.transitions[from], to)
 }
 
 // DumpToDot dumps transitions to Graphviz Dot format
 func (w *Workflow) DumpToDot() []byte {
 	buf := bytes.NewBufferString(fmt.Sprintf("digraph {\n%s[color=\"blue\"]\n", w.initialPlace))
-	for name, t := range w.transitions {
-		for _, f := range t.From {
-			_, _ = buf.WriteString(fmt.Sprintf("%s -> %s[label=\"%s\"];\n", f, t.To, name))
+	for from, to := range w.transitions {
+		for _, place := range to {
+			_, _ = buf.WriteString(fmt.Sprintf("%s -> %s[label=\"%s\"];\n", from, place, fmt.Sprintf("%s → %s", from, place)))
 		}
 	}
 	buf.WriteString("}")
@@ -100,8 +92,3 @@ func (w *Workflow) DumpToDot() []byte {
 
 // Place is one of state
 type Place string
-
-type transition struct {
-	From []Place
-	To   Place
-}

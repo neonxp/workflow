@@ -9,19 +9,21 @@ Simple state machine. Inspired by [Symfony Workflow](https://github.com/symfony/
 ```go
 o := new(ObjectImplementedPlaceer)
 
-w := NewWorkflow("initial")
-w.AddTransition("From initial to A", []Place{"initial"}, "A")
-w.AddTransition("From initial to B", []Place{"initial"}, "B")
-w.AddTransition("From A to C", []Place{"A"}, "C")
-w.AddTransition("From B,C to D", []Place{"B", "C"}, "D")
-w.AddTransition("From C,D to Finish", []Place{"C", "D"}, "Finish")
+w := NewWorkflow("Start")
+w.AddTransition("Start", "A")
+w.AddTransition("Start", "B")
+w.AddTransition("A", "C")
+w.AddTransition("B",  "D")
+w.AddTransition( "C", "D")
+w.AddTransition("C", "Finish")
+w.AddTransition("D", "Finish")
 
-w.Can(o, "From initial to A") // == nil
-w.Can(o, "From A to C") // == ErrCantApply
+w.Can(o, "A") // == nil
+w.Can(o, "C") // == ErrTransitionNotFound
 
-w.GetEnabledTransitions(o) // []string{"From initial to A", "From initial to B"}
-w.Apply(o, "From inital to A") // o now at "A" place
-w.GetEnabledTransitions(o) // []string{"From A to C"}
+w.GetEnabledTransitions(o) // []Place{"A", "B"}
+w.Apply(o, "A") // o now at "A" place
+w.GetEnabledTransitions(o) // []Place{"C"}
 
 w.DumpToDot() // See above
 ```
@@ -30,14 +32,14 @@ w.DumpToDot() // See above
 
 ```
 digraph {
-        initial[color="blue"];
-        initial -> A[label="From initial to A"];
-        initial -> B[label="From initial to B"];
-        A -> C[label="From A to C"];
-        B -> D[label="From B,C to D"];
-        C -> D[label="From B,C to D"];
-        C -> Finish[label="From C,D to Finish"];
-        D -> Finish[label="From C,D to Finish"];
+    Start[color="blue"]
+    Start -> A[label="Start → A"];
+    Start -> B[label="Start → B"];
+    A -> C[label="A → C"];
+    B -> D[label="B → D"];
+    C -> D[label="C → D"];
+    C -> Finish[label="C → Finish"];
+    D -> Finish[label="D → Finish"];
 }
 ```
 

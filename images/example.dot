@@ -1,0 +1,10 @@
+digraph {
+    Start[color="blue"]
+    Start -> A[label="Start → A"];
+    Start -> B[label="Start → B"];
+    A -> C[label="A → C"];
+    B -> D[label="B → D"];
+    C -> D[label="C → D"];
+    C -> Finish[label="C → Finish"];
+    D -> Finish[label="D → Finish"];
+}
